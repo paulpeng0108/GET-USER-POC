@@ -5,6 +5,10 @@ const { getLocation } = require("../ipLookUp/helper")
 const { getEntitlmentDetail } = require("../entitlement/helper")
 const { createNewUser } = require("./helper")
 
+
+// V1 moves the get/set cache logic location module, deviceTravelStatus module
+// So that location module, deviceTravelStatus module is responsible for its own get/set cache
+
 async function getUser(event){
     console.log(LOG_TAG.DEBUG_REQUEST, event.pathParameters.userId, event.headers)
 
@@ -60,7 +64,7 @@ async function getUser(event){
     // Get user enetilement detail
     let entitlement = await getEntitlmentDetail({
         whitelistedEmail: user.email,
-        DTCSubscription: user.getSubscription(),
+        DTCSubscription: user.getSubscription(), // Stripe & Roku
         mvpd: requestParams.headers.tveToken
     })
 
