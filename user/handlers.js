@@ -1,9 +1,22 @@
 const User = require("./User")
 const { findUserByUserID } = require("./db")
-const { updateDeviceTravelStatus } = require("../deviceTravelStatus/helper")
+const { DeviceTravelStatus } = require("../deviceTravelStatus/DeviceTravelStatus")
 const { getLocation } = require("../ipLookUp/helper")
 const { getEntitlmentDetail } = require("../entitlement/helper")
-const { createNewUser } = require("./helper")
+const { createNewUser, getUserLocation, updateUserDeviceTravelStatus } = require("./helper")
+
+
+
+
+
+// V2 moves the get/set cache logic to userHelper,  makes location module, deviceTravelStatus module completely decompled from user module
+
+// user helper is responsible to 
+//      - check cache in user
+//      - use location module, deviceTravelStatus module to get datas
+//      - save cache in user
+
+// So that location module, deviceTravelStatus module can be stand-alone without user
 
 async function getUser(event){
     console.log(LOG_TAG.DEBUG_REQUEST, event.pathParameters.userId, event.headers)
@@ -72,26 +85,14 @@ async function getUser(event){
 
     if(entitlement?.isValid()){
         // Get current location
-        location = await getLocation({
-            whitelistedEmail: user.email,
-            ipAddress,
-            zip,
-            ...options,
-
-            // Params related to user,, can be removed when we change the storage mechanism
-            userID: user.id,
-            cache: user.getLocation()
-        })
+        location = await getUserLocation(user, ip, zip, option)
 
         // Update device travel status base on current location
-        deviceTravelStatus = await updateDeviceTravelStatus({
+        deviceTravelStatus = await updateUserDeviceTravelStatus({
+            user,
             deviceID,
-            isInMarket: location.isInMarket,
+            location,
             ...options,
-
-            // Params related to user, can be removed when we change the storage mechanism
-            userID: user.id,
-            previousTravelStatus: user.getDeviceTravelStatus(deviceID),
         })
 
         // Check concurrent control
@@ -125,3 +126,9 @@ async function getUser(event){
     // Send response
     return lambdaReponse(response)
 };
+
+
+
+
+
+

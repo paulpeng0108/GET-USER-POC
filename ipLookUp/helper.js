@@ -12,36 +12,17 @@ async function getLocation(){
         return defaultInMarketLocation
     }
 
-
-
     // Check whitelist
     let isInTravelWhitelist = await findUserInList(email)
     if(isInTravelWhitelist){
         return defaultInMarketLocation
     }
-
-
-
-    // Check cache
-    let locations = locationCaches
-    let expiredServices = []
-
-    Object.entries(locations).forEach(([location, source]) => {
-        if(isLocationExpired(location)){
-            expiredServices.push(source)
-        }
-    })
-
-    if(expiredServices.length <= 0){
-        return locations
-    }
-
     
 
-    // Check ipLookUp service
-    let updatedLocations = await getLocationByIp(ip, expiredServices)
-    updateUser(user, {[`locationCaches.${ip}`]: mergedLocations})
-    return mergedLocations
+    // Get location from ipLookUp service
+    let locations = await getLocationByIp(ip, expiredServices)
+
+    return locations
 }
 
 
